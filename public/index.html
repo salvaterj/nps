@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dashboard NPS - Lab São Lucas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f5f5f5;
+        color: #222;
+      }
+
+      .container {
+        max-width: 1024px;
+        margin: 0 auto;
+        padding: 24px 16px 40px;
+      }
+
+      h1 {
+        margin-top: 0;
+        margin-bottom: 8px;
+      }
+
+      .subtitle {
+        margin-top: 0;
+        margin-bottom: 24px;
+        color: #555;
+        font-size: 14px;
+      }
+
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: flex-end;
+        margin-bottom: 24px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        font-size: 14px;
+      }
+
+      .field label {
+        margin-bottom: 4px;
+      }
+
+      .field input {
+        padding: 6px 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        min-width: 160px;
+        font-size: 14px;
+      }
+
+      button {
+        padding: 8px 16px;
+        border-radius: 4px;
+        border: none;
+        background: #2563eb;
+        color: #fff;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      button:disabled {
+        background: #a5b4fc;
+        cursor: default;
+      }
+
+      .cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        min-width: 200px;
+      }
+
+      .card-title {
+        font-size: 13px;
+        color: #555;
+        margin-bottom: 4px;
+      }
+
+      .card-value {
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      thead {
+        background: #e5e7eb;
+      }
+
+      th,
+      td {
+        padding: 8px 10px;
+        font-size: 14px;
+      }
+
+      th {
+        text-align: left;
+      }
+
+      tbody tr:nth-child(odd) {
+        background: #f9fafb;
+      }
+
+      .pagination {
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        font-size: 13px;
+      }
+
+      .nps-summary {
+        margin-top: 24px;
+      }
+
+      .nps-summary-title {
+        margin: 0 0 8px 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: #111827;
+      }
+
+      .nps-summary-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .nps-summary-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 10px 14px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        min-width: 130px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .nps-summary-card-score {
+        font-size: 13px;
+        color: #4b5563;
+      }
+
+      .nps-summary-card-count {
+        font-size: 18px;
+        font-weight: 600;
+        color: #111827;
+      }
+
+      .status {
+        margin-top: 12px;
+        font-size: 13px;
+        color: #555;
+      }
+
+      .error {
+        color: #b91c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Dashboard NPS</h1>
+      <p class="subtitle">
+        Lab São Lucas com cálculo de média de NPS e listagem de
+        clientes detratores.
+      </p>
+
+      <div class="filters">
+        <div class="field">
+          <label for="startDate">Data inicial (updatedAt)</label>
+          <input type="text" id="startDate" placeholder="dd/mm/aaaa" />
+        </div>
+        <div class="field">
+          <label for="endDate">Data final (updatedAt)</label>
+          <input type="text" id="endDate" placeholder="dd/mm/aaaa" />
+        </div>
+        <button id="filterButton">Aplicar filtros</button>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="card-title">Média NPS do período</div>
+          <div class="card-value" id="averageNps">-</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Total de contatos no período</div>
+          <div class="card-value" id="totalContacts">-</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Clientes com NPS até 3</div>
+          <div class="card-value" id="totalLowNps">-</div>
+        </div>
+      </div>
+
+      <h2>Clientes com NPS até 3</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Contato</th>
+            <th>NPS</th>
+            <th>Atualizado em</th>
+          </tr>
+        </thead>
+        <tbody id="lowNpsTableBody">
+          <tr>
+            <td colspan="4">Nenhum dado carregado.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="pagination">
+        <button id="prevPage">Anterior</button>
+        <span id="pageInfo">Página 1 de 1</span>
+        <button id="nextPage">Próxima</button>
+      </div>
+
+      <div class="status" id="statusMessage"></div>
+
+      <div class="nps-summary">
+        <p class="nps-summary-title">Resumo de contatos por nota</p>
+        <div class="nps-summary-cards" id="npsSummaryCards"></div>
+      </div>
+    </div>
+
+    <script>
+      const averageNpsEl = document.getElementById("averageNps");
+      const totalContactsEl = document.getElementById("totalContacts");
+      const totalLowNpsEl = document.getElementById("totalLowNps");
+      const lowNpsTableBody = document.getElementById("lowNpsTableBody");
+      const prevPageBtn = document.getElementById("prevPage");
+      const nextPageBtn = document.getElementById("nextPage");
+      const pageInfoEl = document.getElementById("pageInfo");
+      const statusMessageEl = document.getElementById("statusMessage");
+      const filterButton = document.getElementById("filterButton");
+      const startDateInput = document.getElementById("startDate");
+      const endDateInput = document.getElementById("endDate");
+      const npsSummaryCards = document.getElementById("npsSummaryCards");
+
+      let currentPage = 1;
+      let totalPages = 1;
+      const PAGE_SIZE = 20;
+      const cache = {
+        filtersKey: null,
+        data: null
+      };
+
+      function formatDate(iso) {
+        if (!iso) return "-";
+        const date = new Date(iso);
+        if (Number.isNaN(date.getTime())) return iso;
+        return date.toLocaleString("pt-BR");
+      }
+
+      function getContato(contact) {
+        if (contact.phoneNumberFormatted) return contact.phoneNumberFormatted;
+        if (contact.phoneNumber) return contact.phoneNumber;
+        if (contact.email) return contact.email;
+        return "-";
+      }
+
+      function setLoading(loading) {
+        filterButton.disabled = loading;
+        prevPageBtn.disabled = loading || currentPage <= 1;
+        nextPageBtn.disabled = loading || currentPage >= totalPages;
+        statusMessageEl.textContent = loading
+          ? "Carregando dados, isso pode levar alguns segundos..."
+          : "";
+        statusMessageEl.classList.remove("error");
+      }
+
+      function parseDateToIso(value) {
+        if (!value) return "";
+        const trimmed = value.trim();
+        if (!trimmed) return "";
+        const parts = trimmed.split("/");
+        if (parts.length !== 3) return "";
+        const [day, month, year] = parts;
+        const dayNum = parseInt(day, 10);
+        const monthNum = parseInt(month, 10);
+        const yearNum = parseInt(year, 10);
+        if (
+          !dayNum ||
+          !monthNum ||
+          !yearNum ||
+          year.length !== 4 ||
+          day.length !== 2 ||
+          month.length !== 2
+        ) {
+          return "";
+        }
+        const iso = `${yearNum.toString().padStart(4, "0")}-${monthNum
+          .toString()
+          .padStart(2, "0")}-${dayNum.toString().padStart(2, "0")}`;
+        return iso;
+      }
+
+      function buildFiltersKey() {
+        const rawStart = startDateInput.value.trim();
+        const rawEnd = endDateInput.value.trim();
+        return `${rawStart}|${rawEnd}`;
+      }
+
+      function renderDashboardFromCache(page) {
+        if (!cache.data) {
+          return;
+        }
+
+        const data = cache.data;
+        const items = Array.isArray(data.items) ? data.items : [];
+
+        if (typeof data.averageNps === "number") {
+          averageNpsEl.textContent = data.averageNps.toFixed(1);
+        } else {
+          averageNpsEl.textContent = "-";
+        }
+
+        totalContactsEl.textContent =
+          typeof data.totalContacts === "number"
+            ? String(data.totalContacts)
+            : "-";
+
+        const totalLowNps = items.length;
+        totalLowNpsEl.textContent = String(totalLowNps);
+
+        totalPages =
+          totalLowNps === 0 ? 1 : Math.ceil(totalLowNps / PAGE_SIZE);
+        currentPage = Math.min(Math.max(page || 1, 1), totalPages);
+
+        prevPageBtn.disabled = currentPage <= 1;
+        nextPageBtn.disabled = currentPage >= totalPages;
+        pageInfoEl.textContent = `Página ${currentPage} de ${totalPages}`;
+
+        lowNpsTableBody.innerHTML = "";
+
+        if (items.length === 0) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 4;
+          td.textContent = "Nenhum cliente com NPS até 3.";
+          tr.appendChild(td);
+          lowNpsTableBody.appendChild(tr);
+          return;
+        }
+
+        const startIndex = (currentPage - 1) * PAGE_SIZE;
+        const pageItems = items.slice(startIndex, startIndex + PAGE_SIZE);
+
+        pageItems.forEach((contact) => {
+          const tr = document.createElement("tr");
+
+          const nameTd = document.createElement("td");
+          nameTd.textContent = contact.name || "-";
+
+          const contactTd = document.createElement("td");
+          contactTd.textContent = getContato(contact);
+
+          const npsTd = document.createElement("td");
+          npsTd.textContent =
+            typeof contact.nps === "number" ? String(contact.nps) : "-";
+
+          const updatedAtTd = document.createElement("td");
+          updatedAtTd.textContent = formatDate(contact.updatedAt);
+
+          tr.appendChild(nameTd);
+          tr.appendChild(contactTd);
+          tr.appendChild(npsTd);
+          tr.appendChild(updatedAtTd);
+
+          lowNpsTableBody.appendChild(tr);
+        });
+
+        npsSummaryCards.innerHTML = "";
+
+        const summaryFromApi = Array.isArray(data.npsSummary)
+          ? data.npsSummary
+          : [];
+
+        const summary =
+          summaryFromApi.length > 0
+            ? summaryFromApi
+            : [1, 2, 3, 4, 5].map((score) => ({
+                score,
+                count: 0
+              }));
+
+        summary.forEach((item) => {
+          const card = document.createElement("div");
+          card.className = "nps-summary-card";
+
+          const scoreEl = document.createElement("div");
+          scoreEl.className = "nps-summary-card-score";
+          scoreEl.textContent = `Nota ${item.score}`;
+
+          const countEl = document.createElement("div");
+          countEl.className = "nps-summary-card-count";
+          countEl.textContent = `${item.count} contatos`;
+
+          card.appendChild(scoreEl);
+          card.appendChild(countEl);
+          npsSummaryCards.appendChild(card);
+        });
+      }
+
+      async function loadDashboard(page, useCache) {
+        currentPage = page || 1;
+
+        const filtersKey = buildFiltersKey();
+
+        if (useCache && cache.data && cache.filtersKey === filtersKey) {
+          renderDashboardFromCache(currentPage);
+          return;
+        }
+
+        setLoading(true);
+
+        try {
+          const params = new URLSearchParams();
+          params.set("page", "1");
+
+          const startDateIso = parseDateToIso(startDateInput.value);
+          const endDateIso = parseDateToIso(endDateInput.value);
+
+          if (startDateIso) params.set("startDate", startDateIso);
+          if (endDateIso) params.set("endDate", endDateIso);
+
+          const response = await fetch(`/api/dashboard?${params.toString()}`);
+
+          if (!response.ok) {
+            const text = await response.text();
+            throw new Error(
+              `Erro ao carregar dashboard: status=${response.status} corpo=${text}`
+            );
+          }
+
+          const data = await response.json();
+          const allItems = Array.isArray(data.lowNpsAllItems)
+            ? data.lowNpsAllItems
+            : data.lowNps && Array.isArray(data.lowNps.items)
+            ? data.lowNps.items
+            : [];
+
+          cache.filtersKey = filtersKey;
+          cache.data = {
+            averageNps: data.averageNps,
+            totalContacts: data.totalContacts,
+            items: allItems,
+            npsSummary: data.npsSummary
+          };
+
+          renderDashboardFromCache(currentPage);
+        } catch (error) {
+          statusMessageEl.textContent = error.message;
+          statusMessageEl.classList.add("error");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      filterButton.addEventListener("click", () => {
+        loadDashboard(1, false);
+      });
+
+      prevPageBtn.addEventListener("click", () => {
+        if (currentPage > 1) {
+          loadDashboard(currentPage - 1, true);
+        }
+      });
+
+      nextPageBtn.addEventListener("click", () => {
+        if (currentPage < totalPages) {
+          loadDashboard(currentPage + 1, true);
+        }
+      });
+
+      loadDashboard(1, false);
+    </script>
+  </body>
+    </html>
